@@ -1,0 +1,121 @@
+###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
+# pi-hole using unbound (instead of the external DNS servers)
+#
+# Author:
+#	Christopher Weedall (csw.programmer@gmail.com)
+#
+# Date:
+#	2020-08-04
+#
+# Description:
+#	This is basically a pi-hole container running via docker.
+#	It is meant to be run on a mobile device (e.g. a laptop) where you 
+#	are likely to not be at home or at a friend's house who uses pi-hole already.
+#	Because you don't want to lug around your Raspberry Pi, this can be run
+#	locally and you get all the benefit of pi-hole!
+#
+# Dependencies:
+#	.env - this file contains the values used below (e.g. ${VARIABLENAME})
+#
+# Requirements:
+#	Unfortunately, running these docker containers does not automagically work...
+#	You will need to manually specify AT LEAST two DNS services manually within
+#	your computer's OS or on the (probably) wifi adapter.
+#	The first MUST be: 127.0.0.1
+#	The second might be: 1.1.1.1 (cloudflare DNS) OR whichever DNS server you prefer!
+#
+#	Assuming you already use Raspberry Pi with pi-hole at home (like me), you might
+#	actually have three DNS servers (under an advanced list for the OS/adapter).
+#	Mine is:
+#		DNS server 1: 192.168.1.20 (e.g. Raspberry Pi - this won't resolve elsewhere! and fallback to server #2)
+#		DNS server 2: 127.0.0.1 (on your first run, this should fail and fallback to server #3)
+#		DNS server 3: 1.1.1.1
+#
+#	Important Note!
+#		If you receive an error when bringing up the container, you might be at a hotel
+#		or cafe and you need to log into their "Agree to our terms" page.
+#		You'll need to do that first, otherwise the DNS server will not resolve
+#		to allow you to download (and subsequently run) the docker containers.
+#
+# Instructions:
+#	from command line, run:
+#		docker-compose up
+#	in the same directory that contains THIS file and the .env file (listed above in Dependencies).
+#			
+###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
+
+# docker-compose version to follow
+version: "3.7"
+
+#------------------#
+# Docker containers
+#------------------#
+services:
+  #===============================================================#
+  # unbound container
+  #===============================================================#
+  unbound:
+    container_name: unbound
+    image: mvance/unbound
+    hostname: unbound
+    restart: unless-stopped
+    #################################################################
+    # disable unbound logging
+    #################################################################
+    logging:
+      driver: none
+    #################################################################
+    # map port 5335 to be same in container as host
+    #################################################################
+    ports:
+      - '5335:5335/tcp'
+      - '5335:5335/udp'
+
+  #===============================================================#
+  # pi-hole container
+  #===============================================================#
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    hostname: pihole
+    restart: unless-stopped
+    #################################################################
+    # map ports 53, 80, and 443 to be same in container as host
+    # -- uncomment port 67 if using DHCP (not needed currently)
+    #################################################################
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+      #- '67:67/udp'
+      - '80:80/tcp'
+      - '443:443/tcp'
+    #################################################################
+    #
+    #################################################################
+    volumes:
+      #- './etc-pihole/:/etc/pihole/' #original
+      #- './etc-dnsmasq.d/:/etc/dnsmasq.d/' #original
+      - '${LOCALETCPIHOLEDIR}:/etc/pihole/'
+      - '${LOCALETCDNSMASQdDIR}:/etc/dnsmasq.d/'
+    #dns: #this never works for me??
+      #- 127.0.0.1
+      #- 1.1.1.1
+    #################################################################
+    #
+    #################################################################
+    # For pi-hole environment variables, see:
+    # https://github.com/pi-hole/docker-pi-hole#environment-variables
+    environment:
+      TZ: 'America/Chicago' # use Host-Timezone with volumes
+      ServerIP: ${SERVERIPV4} #<DOCKER_HOST_IPv4>
+      IPv6: ${IPV6ENABLED}
+      #ServerIPv6: ${SERVERIPV6} #<DOCKER_HOST_IPv6> -- only useable on networks providing an IPv6 address (many only give IPv4, so leave this disabled normally)
+      WEBPASSWORD: ${WEBPASSWORD}
+      DNS1: ${DNS1} #localhost, use port 5335 from unbound
+      DNS2: ${DNS2} #localhost, use port 5335 from unbound
+      DNSMASQ_LISTENING: local #DNSMASQ_LISTENING  =  local|all|NIC #local -> allows traffic from wifi also
+      DNS_BOGUS_PRIV: 'True'
+      DNS_FQDN_REQUIRED: 'True'
+      DNSSEC: 'True'
+      DNSMASQ_USER: 'pihole' # avoid using root user, for security reasons
+      #WEBTHEME: default-dark # this is not a valid option... hoping for it in the future!!
