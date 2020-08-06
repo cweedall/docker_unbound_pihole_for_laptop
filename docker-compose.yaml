@@ -2,14 +2,14 @@
 # pi-hole using unbound (instead of the external DNS servers)
 #
 # Author:
-#	Christopher Weedall (csw.programmer@gmail.com)
+#	Christopher Weedall
 #
 # Date:
 #	2020-08-04
 #
 # Description:
 #	This is basically a pi-hole container running via docker.
-#	It is meant to be run on a mobile device (e.g. a laptop) where you 
+#	It is meant to be run on a mobile device (e.g. a laptop) where you
 #	are likely to not be at home or at a friend's house who uses pi-hole already.
 #	Because you don't want to lug around your Raspberry Pi, this can be run
 #	locally and you get all the benefit of pi-hole!
@@ -32,8 +32,9 @@
 #		DNS server 3: 1.1.1.1
 #
 #	Important Note!
-#		If you receive an error when bringing up the container, you might be at a hotel
-#		or cafe and you need to log into their "Agree to our terms" page.
+#		If you receive an error when bringing up the container,
+#     e.g.  ERROR Get https://registry-1.docker.io/v2/ EOF
+#   you might be at a hotel or cafe and you need to log into their "Agree to our terms" page.
 #		You'll need to do that first, otherwise the DNS server will not resolve
 #		to allow you to download (and subsequently run) the docker containers.
 #
@@ -41,7 +42,7 @@
 #	from command line, run:
 #		docker-compose up
 #	in the same directory that contains THIS file and the .env file (listed above in Dependencies).
-#			
+#
 ###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
 
 # docker-compose version to follow
